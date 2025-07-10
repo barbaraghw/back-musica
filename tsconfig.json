@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2017", // O la versión que prefieras (es2020, esnext)
+    "module": "commonjs",
+    "lib": ["es2017"],
+    "outDir": "./dist", // <-- MUY IMPORTANTE: Aquí se guardará el JS compilado
+    "rootDir": "./src", // <-- MUY IMPORTANTE: Aquí está tu código fuente TS
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts"], // <-- MUY IMPORTANTE: Incluye todos los .ts en src
+  "exclude": ["node_modules"]
+}
