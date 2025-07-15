@@ -9,6 +9,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const passport_1 = __importDefault(require("passport")); // Importa passport
 const authRoutes_1 = __importDefault(require("./routes/authRoutes")); // Asegúrate de que la ruta sea correcta
 const userRoutes_1 = __importDefault(require("./routes/userRoutes")); // Asegúrate de que la ruta sea correcta
+const spotifyRoutes_1 = __importDefault(require("./routes/spotifyRoutes"));
 // Carga las variables de entorno desde .env
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -23,6 +24,7 @@ require("./config/passport");
 // Rutas
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
+app.use('/api/spotify', spotifyRoutes_1.default);
 // Ruta de prueba
 app.get('/', (req, res) => {
     res.send('¡Backend de tu aplicación funcionando!');

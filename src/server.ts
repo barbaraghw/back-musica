@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import passport from 'passport'; // Importa passport
 import authRoutes from './routes/authRoutes'; // Asegúrate de que la ruta sea correcta
 import userRoutes from './routes/userRoutes'; // Asegúrate de que la ruta sea correcta
+import spotifyRoutes from './routes/spotifyRoutes';
 
 // Carga las variables de entorno desde .env
 dotenv.config();
@@ -23,7 +24,7 @@ import './config/passport';
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-
+app.use('/api/spotify', spotifyRoutes); 
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.send('¡Backend de tu aplicación funcionando!');
