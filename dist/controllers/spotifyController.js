@@ -32,6 +32,7 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
 exports.spotifyLogin = asyncHandler(async (req, res) => {
     const state = generateRandomString(16); // Genera un estado aleatorio
     // Define los ámbitos (scopes) que tu aplicación necesita
+    // ¡NUEVOS SCOPES PARA SPOTIFY WEB PLAYBACK SDK!
     const scope = 'user-read-private user-read-email playlist-read-private user-library-read user-top-read user-follow-read streaming user-modify-playback-state user-read-playback-state user-read-currently-playing app-remote-control';
     // Redirige al usuario a la página de autorización de Spotify
     res.redirect(SPOTIFY_AUTH_URL + '?' +

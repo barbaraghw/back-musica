@@ -8,12 +8,13 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const passport_1 = __importDefault(require("passport")); // Importa passport
 const authRoutes_1 = __importDefault(require("./routes/authRoutes")); // Asegúrate de que la ruta sea correcta
-const userRoutes_1 = __importDefault(require("./routes/userRoutes")); // Asegúrate de que la ruta sea correcta
-const spotifyRoutes_1 = __importDefault(require("./routes/spotifyRoutes"));
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const audioRoutes_1 = __importDefault(require("./routes/audioRoutes"));
+const path_1 = __importDefault(require("path"));
 // Carga las variables de entorno desde .env
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8888;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/music'; // ¡Cambia esto por tu URI real!
 // Middlewares
 app.use(express_1.default.json()); // Para parsear cuerpos de petición JSON
@@ -24,11 +25,12 @@ require("./config/passport");
 // Rutas
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
-app.use('/api/spotify', spotifyRoutes_1.default);
+app.use('/api/audio', audioRoutes_1.default);
 // Ruta de prueba
 app.get('/', (req, res) => {
     res.send('¡Backend de tu aplicación funcionando!');
 });
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
 // Conexión a la base de datos
 mongoose_1.default.connect(MONGODB_URI)
     .then(() => {

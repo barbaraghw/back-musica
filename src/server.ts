@@ -3,14 +3,14 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import passport from 'passport'; // Importa passport
 import authRoutes from './routes/authRoutes'; // Asegúrate de que la ruta sea correcta
-import userRoutes from './routes/userRoutes'; // Asegúrate de que la ruta sea correcta
-import spotifyRoutes from './routes/spotifyRoutes';
-
+import userRoutes from './routes/userRoutes';
+import audioRoutes from './routes/audioRoutes';
+import path from 'path';
 // Carga las variables de entorno desde .env
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8888;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/music'; // ¡Cambia esto por tu URI real!
 
 // Middlewares
@@ -24,11 +24,12 @@ import './config/passport';
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/spotify', spotifyRoutes); 
+app.use('/api/audio', audioRoutes);
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.send('¡Backend de tu aplicación funcionando!');
 });
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Conexión a la base de datos
 mongoose.connect(MONGODB_URI)
