@@ -12,7 +12,8 @@ const Songs_1 = __importDefault(require("../models/Songs")); // Import the Song 
 const router = (0, express_1.Router)();
 // --- Multer Configuration ---
 const storage = multer_1.default.diskStorage({
-    // Se ha tipado explícitamente el callback 'cb' y se asegura que siempre reciba 2 argumentos
+    // El callback 'cb' se infiere correctamente o se usa un tipo genérico si es necesario.
+    // Se asegura que siempre reciba 2 argumentos.
     destination: (req, file, cb) => {
         let uploadDir;
         // Determine the upload directory based on the file fieldname
@@ -24,8 +25,8 @@ const storage = multer_1.default.diskStorage({
         }
         else {
             // Fallback or error if fieldname is unexpected
-            // Cuando hay un error, el segundo argumento debe ser una cadena vacía o un valor por defecto.
-            return cb(new Error('Unexpected fieldname'), '');
+            // When there's an error, the second argument must be an empty string or a default value.
+            return cb(new Error('Unexpected fieldname'), ''); // Pass empty string for destination
         }
         // Ensure the directory exists, create it if it doesn't
         if (!fs_1.default.existsSync(uploadDir)) {
@@ -33,9 +34,10 @@ const storage = multer_1.default.diskStorage({
         }
         cb(null, uploadDir);
     },
-    // Se ha tipado explícitamente el callback 'cb' para asegurar la compatibilidad
     filename: (req, file, cb) => {
+        // Generate a unique filename to prevent collisions
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        // The callback for filename expects (error: Error | null, filename: string)
         cb(null, file.fieldname + '-' + uniqueSuffix + path_1.default.extname(file.originalname));
     },
 });
@@ -47,7 +49,7 @@ const fileFilter = (req, file, cb) => {
             cb(null, true);
         }
         else {
-            // When there's an error, the second argument must be 'false'. false);
+            // When there's an error, the second argument must be 'false'.
         }
     }
     else if (file.fieldname === 'image') {
@@ -55,12 +57,12 @@ const fileFilter = (req, file, cb) => {
             cb(null, true);
         }
         else {
-            // When there's an error, the second argument must be 'false'. false);
+            // When there's an error, the second argument must be 'false'.
         }
     }
     else {
         // This block runs if the file fieldname is neither 'audio' nor 'image'.
-        // When there's an error, the second argument must be 'false'
+        // When there's an error, the second argument must be 'false'.
     }
 };
 const upload = (0, multer_1.default)({
@@ -136,7 +138,7 @@ router.post('/upload', upload.fields([
     }
 });
 // ====================================================================
-// NUEVA RUTA: Obtener todas las canciones disponibles
+// RUTA: Obtener todas las canciones disponibles
 // Accesible en GET /api/audio/songs
 // ====================================================================
 router.get('/songs', async (req, res) => {
@@ -147,6 +149,52 @@ router.get('/songs', async (req, res) => {
     catch (error) {
         console.error('Error al obtener las canciones:', error);
         res.status(500).json({ message: 'Error interno del servidor al obtener las canciones.' });
+    }
+});
+// ====================================================================
+// NUEVA RUTA: Obtener una canción por su ID
+// Accesible en GET /api/audio/songs/:id
+// ====================================================================
+router.get('/songs/:id', async (req, res) => {
+    try {
+        const song = await Songs_1.default.findById(req.params.id);
+        if (!song) {
+            return res.status(404).json({ message: 'Canción no encontrada.' });
+        }
+        res.status(200).json(song);
+    }
+    catch (error) {
+        console.error('Error al obtener canción por ID:', error);
+        res.status(500).json({ message: 'Error interno del servidor al obtener la canción.' });
+    }
+});
+// ====================================================================
+// NUEVA RUTA: Obtener la siguiente canción del mismo género
+// Accesible en GET /api/audio/songs/next-by-genre/:currentSongId
+// ====================================================================
+router.get('/songs/next-by-genre/:currentSongId', async (req, res) => {
+    try {
+        const currentSongId = req.params.currentSongId;
+        const currentSong = await Songs_1.default.findById(currentSongId);
+        if (!currentSong) {
+            return res.status(404).json({ message: 'Canción actual no encontrada.' });
+        }
+        const genre = currentSong.genre;
+        // Buscar canciones del mismo género, excluyendo la canción actual
+        const nextSongs = await Songs_1.default.find({
+            genre: genre,
+            _id: { $ne: currentSongId } // Excluir la canción actual
+        });
+        if (nextSongs.length === 0) {
+            return res.status(404).json({ message: 'No hay más canciones del mismo género.' });
+        }
+        // Devolver una canción aleatoria de la lista de siguientes canciones
+        const randomIndex = Math.floor(Math.random() * nextSongs.length);
+        res.status(200).json(nextSongs[randomIndex]);
+    }
+    catch (error) {
+        console.error('Error al obtener la siguiente canción por género:', error);
+        res.status(500).json({ message: 'Error interno del servidor al obtener la siguiente canción.' });
     }
 });
 exports.default = router;
