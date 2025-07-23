@@ -1,5 +1,5 @@
 // This file specifically describes the user object after JWT authentication.
-
+import { IUser } from '../models/User'; 
 export interface IAuthenticatedUser {
     _id: string; // The ID will be a string from the JWT payload
     email: string;

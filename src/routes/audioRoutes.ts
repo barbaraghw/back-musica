@@ -1,61 +1,54 @@
 // backend/src/routes/audioRoutes.ts
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express'; // Import Request, Response, NextFunction
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs'; // Import fs for file system operations
 import Song, { ISong } from '../models/Songs'; // Import the Song model (assuming it's defined)
+// Importa authenticateJWT desde authMiddleware. No necesitas importar AuthenticatedRequest aquí.
+import { authenticateJWT } from '../middleware/authMiddleware';
+import { IAuthenticatedUser } from '../interfaces/IAuthenticatedUser'; // Importa IAuthenticatedUser
+
+// NOTA: La interfaz AuthenticatedRequest ya NO se define aquí ni se importa.
+// Se maneja a través de la declaración de módulos en backend/src/types/express.d.ts.
+// Si necesitas acceder a req.user, simplemente usa 'req.user' y TypeScript lo tipará correctamente.
 
 const router = Router();
 
 // --- Multer Configuration ---
 const storage = multer.diskStorage({
-  // El callback 'cb' se infiere correctamente o se usa un tipo genérico si es necesario.
-  // Se asegura que siempre reciba 2 argumentos.
-  destination: (req, file, cb) => { // Removed explicit type for cb, let TypeScript infer
+  destination: (req, file, cb) => {
     let uploadDir: string;
-    // Determine the upload directory based on the file fieldname
     if (file.fieldname === 'audio') {
-      uploadDir = path.join(__dirname, '../../uploads/audio'); // Directory for audio files
+      uploadDir = path.join(__dirname, '../../uploads/audio');
     } else if (file.fieldname === 'image') {
-      uploadDir = path.join(__dirname, '../../uploads/images'); // Directory for image files
+      uploadDir = path.join(__dirname, '../../uploads/images');
     } else {
-      // Fallback or error if fieldname is unexpected
-      // When there's an error, the second argument must be an empty string or a default value.
-      return cb(new Error('Unexpected fieldname'), ''); // Pass empty string for destination
+      return cb(new Error('Unexpected fieldname'), '');
     }
 
-    // Ensure the directory exists, create it if it doesn't
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => { // Removed explicit type for cb, let TypeScript infer
-    // Generate a unique filename to prevent collisions
+  filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // The callback for filename expects (error: Error | null, filename: string)
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   },
 });
 
-// File filter with proper typing
-// Se asegura que el callback 'cb' siempre reciba 2 argumentos
 const fileFilter: multer.Options['fileFilter'] = (req, file, cb) => {
   if (file.fieldname === 'audio') {
     if (file.mimetype.startsWith('audio/')) {
       cb(null, true);
     } else {
-      // When there's an error, the second argument must be 'false'.
     }
   } else if (file.fieldname === 'image') {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      // When there's an error, the second argument must be 'false'.
     }
   } else {
-    // This block runs if the file fieldname is neither 'audio' nor 'image'.
-    // When there's an error, the second argument must be 'false'.
   }
 };
 
@@ -63,7 +56,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024, // Combined limit for all files, or you can set individual limits
+    fileSize: 50 * 1024 * 1024,
   },
 });
 
@@ -72,44 +65,48 @@ const upload = multer({
 // Accesible en POST /api/audio/upload
 // ====================================================================
 router.post('/upload',
+  authenticateJWT, // Usa authenticateJWT
   upload.fields([
     { name: 'audio', maxCount: 1 },
     { name: 'image', maxCount: 1 }
   ]),
-  async (req, res) => { // Made async to use await for database operations
+  // Aquí, el tipo 'req' ya es Express.Request extendido por express.d.ts
+  async (req: Request, res) => { // Simplemente usa Request, no AuthenticatedRequest
     const audioFile = (req.files as { [fieldname: string]: Express.Multer.File[] })['audio']?.[0];
     const imageFile = (req.files as { [fieldname: string]: Express.Multer.File[] })['image']?.[0];
 
     console.log('Backend: req.files:', req.files);
     console.log('Backend: req.body:', req.body);
+    console.log('Backend: req.user (from auth):', req.user); // req.user ya está tipado correctamente
 
     if (!audioFile || !imageFile) {
       return res.status(400).json({ message: 'Se requieren un archivo de audio y una imagen.' });
     }
 
-    const { title, artistGroup, album, genre, userId } = req.body;
+    const { title, artistGroup, album, genre } = req.body;
+    // Obtén userId de req.user, que ahora está tipado por express.d.ts
+    // Realiza una aserción de tipo explícita para asegurar que TypeScript vea req.user como IAuthenticatedUser
+    const userId = (req.user as IAuthenticatedUser)?._id;
 
     if (!title || !artistGroup || !album || !genre || !userId) {
-      // Clean up uploaded files if metadata is missing
       fs.unlink(audioFile.path, (err) => { if (err) console.error('Error deleting audio file:', err); });
       fs.unlink(imageFile.path, (err) => { if (err) console.error('Error deleting image file:', err); });
-      return res.status(400).json({ message: 'Faltan metadatos de la canción (título, artista, álbum, género, userId).' });
+      return res.status(400).json({ message: 'Faltan metadatos de la canción (título, artista, álbum, género, o userId no encontrado).' });
     }
 
     try {
-      // Create a new Song document and save it to MongoDB
       const newSong: ISong = new Song({
         title,
         artistGroup,
         album,
         genre,
         userId,
-        audioPath: `/uploads/audio/${audioFile.filename}`, // Store relative path
-        imagePath: `/uploads/images/${imageFile.filename}`, // Store relative path
+        audioPath: `/uploads/audio/${audioFile.filename}`,
+        imagePath: `/uploads/images/${imageFile.filename}`,
         uploadDate: new Date(),
       });
 
-      await newSong.save(); // Save the song to the database
+      await newSong.save();
 
       console.log(`Audio subido: ${audioFile.filename} por el usuario: ${userId || 'Desconocido'}`);
       console.log(`Imagen subida: ${imageFile.filename} para la canción: ${title || 'Desconocido'}`);
@@ -117,7 +114,7 @@ router.post('/upload',
 
       res.status(200).json({
         message: 'Archivo de audio e imagen subidos exitosamente y metadatos guardados.',
-        songId: newSong._id, // Return the ID of the new song
+        songId: newSong._id,
         audioFilename: audioFile.filename,
         audioFilePath: newSong.audioPath,
         imageFilename: imageFile.filename,
@@ -130,7 +127,6 @@ router.post('/upload',
       });
     } catch (error) {
       console.error('Error al guardar la canción en la base de datos:', error);
-      // Clean up uploaded files if database save fails
       fs.unlink(audioFile.path, (err) => { if (err) console.error('Error deleting audio file:', err); });
       fs.unlink(imageFile.path, (err) => { if (err) console.error('Error deleting image file:', err); });
       res.status(500).json({ message: 'Error interno del servidor al guardar la canción.' });
@@ -144,7 +140,7 @@ router.post('/upload',
 // ====================================================================
 router.get('/songs', async (req, res) => {
   try {
-    const songs = await Song.find({}); // Fetch all songs from the database
+    const songs = await Song.find({});
     res.status(200).json(songs);
   } catch (error) {
     console.error('Error al obtener las canciones:', error);
@@ -166,6 +162,39 @@ router.get('/songs/:id', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener canción por ID:', error);
     res.status(500).json({ message: 'Error interno del servidor al obtener la canción.' });
+  }
+});
+
+// Ruta para obtener géneros únicos
+router.get('/genres', authenticateJWT, async (req: Request, res) => { // Simplemente usa Request
+  try {
+    const genres = await Song.distinct('genre');
+    res.json(genres);
+  } catch (error: any) {
+    console.error('Error al obtener géneros:', error);
+    res.status(500).json({ message: 'Error al obtener géneros.', error: error.message });
+  }
+});
+
+// Ruta para obtener artistas únicos
+router.get('/artists', authenticateJWT, async (req: Request, res) => { // Simplemente usa Request
+  try {
+    const artists = await Song.distinct('artistGroup');
+    res.json(artists);
+  } catch (error: any) {
+    console.error('Error al obtener artistas:', error);
+    res.status(500).json({ message: 'Error al obtener artistas.', error: error.message });
+  }
+});
+
+// Ruta para obtener álbumes únicos
+router.get('/albums', authenticateJWT, async (req: Request, res) => { // Simplemente usa Request
+  try {
+    const albums = await Song.distinct('album');
+    res.json(albums);
+  } catch (error: any) {
+    console.error('Error al obtener álbumes:', error);
+    res.status(500).json({ message: 'Error al obtener álbumes.', error: error.message });
   }
 });
 

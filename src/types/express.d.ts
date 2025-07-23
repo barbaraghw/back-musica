@@ -1,5 +1,8 @@
-import { IUser } from '../models/User'; // Asegúrate de que la ruta sea correcta
+// backend/src/types/express.d.ts
+// Este archivo extiende las interfaces de Express para añadir tipado a req.user
+// y los métodos de Passport.js en el objeto Request.
 
+import { IUser } from '../models/User'; // Asegúrate de que la ruta sea correcta
 import { IAuthenticatedUser } from '../interfaces/IAuthenticatedUser'; // Asegúrate de que la ruta sea correcta
 
 declare global {
