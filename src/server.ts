@@ -6,6 +6,8 @@ import authRoutes from './routes/authRoutes'; // Asegúrate de que la ruta sea c
 import userRoutes from './routes/userRoutes';
 import audioRoutes from './routes/audioRoutes';
 import path from 'path';
+import playlistRoutes from './routes/playlistRoutes';
+
 // Carga las variables de entorno desde .env
 dotenv.config();
 
@@ -25,6 +27,7 @@ import './config/passport';
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/audio', audioRoutes);
+app.use('/api/playlists', playlistRoutes);
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.send('¡Backend de tu aplicación funcionando!');

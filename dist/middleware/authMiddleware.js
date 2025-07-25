@@ -28,7 +28,7 @@ const authenticateJWT = (req, res, next) => {
         // Esto es crucial para manejar la conversión de ObjectId a string para _id
         // y asegurar que todas las propiedades requeridas estén presentes y sean del tipo correcto.
         const authenticatedUser = {
-            _id: user._id.toString(), // Convierte ObjectId (de Mongoose) a string
+            _id: user._id.toString(), // Ensure _id is converted to string
             email: user.email,
             username: user.username,
             isAuthor: user.isAuthor,

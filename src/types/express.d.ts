@@ -7,7 +7,7 @@ import { IAuthenticatedUser } from '../interfaces/IAuthenticatedUser'; // Asegú
 
 declare global {
     namespace Express {
-        // Extiende la interfaz Request para añadir propiedades y métodos específicos de Passport
+        interface User extends IAuthenticatedUser {}
         export interface Request {
             user?: IAuthenticatedUser; // Propiedad añadida por Passport al autenticar
             // Los métodos de login/logout/isAuthenticated/isUnauthenticated

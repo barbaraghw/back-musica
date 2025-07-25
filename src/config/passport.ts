@@ -3,6 +3,7 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import User, { IUser } from '../models/User'; // Importa IUser y tu modelo User
 import dotenv from 'dotenv'; // Importa dotenv para cargar variables de entorno
+import { IAuthenticatedUser } from '../interfaces/IAuthenticatedUser';
 
 dotenv.config(); // Asegúrate de cargar las variables de entorno aquí también, si este archivo se ejecuta de forma independiente o antes que app.ts
 
@@ -23,11 +24,19 @@ passport.use(new LocalStrategy({
             return done(null, false, { message: 'Credenciales incorrectas.' });
         }
         // Cuando la autenticación es exitosa, devuelve el documento de usuario (tipado como IUser)
-        return done(null, user as IUser);
-    } catch (err: any) { // Captura cualquier error inesperado
-        return done(err);
+        const authenticatedUser: IAuthenticatedUser = {
+        _id: user._id.toString(),
+        email: user.email,
+        username: user.username,
+        isAuthor: user.isAuthor
+      };
+
+      return done(null, authenticatedUser); // ✅ Ahora sí, sin error
+    } catch (err) {
+      return done(err);
     }
-}));
+  }
+));
 
 // JWT Strategy (para proteger rutas con token)
 const jwtSecret = process.env.JWT_SECRET;

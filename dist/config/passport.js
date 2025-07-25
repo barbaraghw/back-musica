@@ -26,9 +26,15 @@ passport_1.default.use(new passport_local_1.Strategy({
             return done(null, false, { message: 'Credenciales incorrectas.' });
         }
         // Cuando la autenticación es exitosa, devuelve el documento de usuario (tipado como IUser)
-        return done(null, user);
+        const authenticatedUser = {
+            _id: user._id.toString(),
+            email: user.email,
+            username: user.username,
+            isAuthor: user.isAuthor
+        };
+        return done(null, authenticatedUser); // ✅ Ahora sí, sin error
     }
-    catch (err) { // Captura cualquier error inesperado
+    catch (err) {
         return done(err);
     }
 }));

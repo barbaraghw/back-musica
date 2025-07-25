@@ -11,6 +11,7 @@ const authRoutes_1 = __importDefault(require("./routes/authRoutes")); // Asegúr
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const audioRoutes_1 = __importDefault(require("./routes/audioRoutes"));
 const path_1 = __importDefault(require("path"));
+const playlistRoutes_1 = __importDefault(require("./routes/playlistRoutes"));
 // Carga las variables de entorno desde .env
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -26,6 +27,7 @@ require("./config/passport");
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/audio', audioRoutes_1.default);
+app.use('/api/playlists', playlistRoutes_1.default);
 // Ruta de prueba
 app.get('/', (req, res) => {
     res.send('¡Backend de tu aplicación funcionando!');
